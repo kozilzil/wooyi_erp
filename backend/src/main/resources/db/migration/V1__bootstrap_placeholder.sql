@@ -1,0 +1,2 @@
+-- Bootstrap placeholder migration.
+-- Initial schema will be introduced by backlog cards (B01+).
