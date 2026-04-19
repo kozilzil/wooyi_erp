@@ -86,6 +86,18 @@ Default seeded admin account:
 - `loginId`: `admin`
 - `password`: `password`
 
+## Common Code / Organization Bootstrap (B02)
+
+Implemented APIs:
+
+- `GET/POST/PUT/DELETE /api/organizations`
+- `GET/POST/PUT/DELETE /api/common-codes`
+- `GET /api/common-codes/groups/{groupCode}`
+
+Frontend:
+
+- login 이후 조직/공통코드 관리 화면 제공 (검색/등록/수정/비활성 처리)
+
 ## Build and Test
 
 Backend:
@@ -111,3 +123,15 @@ cd frontend
 npm.cmd run lint
 npm.cmd run build
 ```
+
+## Finance Period / Account Bootstrap (F01)
+
+Implemented APIs:
+
+- `GET/POST/PUT/DELETE /api/finance/periods`
+- `GET/POST/PUT/DELETE /api/finance/accounts`
+
+Frontend:
+
+- finance period management tab (search/register/update/delete)
+- finance account management tab (search/register/update/delete)

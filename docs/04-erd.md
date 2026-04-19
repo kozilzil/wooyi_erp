@@ -306,3 +306,72 @@
 - ledger_entries(period_id, account_id, entry_date)
 - assets(asset_no)
 - assets(department_id, location_id, status)
+
+---
+
+## 7. B02 Physical Schema Notes
+
+Implemented tables:
+
+### organizations
+- id (PK)
+- code (UNIQUE)
+- name
+- parent_id (self FK)
+- type
+- active
+- created_at
+- updated_at
+- deleted_at
+
+### common_codes
+- id (PK)
+- group_code
+- code
+- name
+- sort_order
+- active
+- description
+- created_at
+- updated_at
+- deleted_at
+- UNIQUE(group_code, code)
+
+### audit_logs
+- id (PK)
+- module_name
+- entity_name
+- entity_id
+- action
+- actor_id
+- payload_before
+- payload_after
+- created_at
+
+## 8. F01 Physical Schema Notes
+
+Implemented tables:
+
+### finance_periods
+- id (PK)
+- fiscal_year
+- period_no
+- start_date
+- end_date
+- status (OPEN, CLOSED)
+- active
+- created_at
+- updated_at
+- deleted_at
+- UNIQUE(fiscal_year, period_no)
+
+### finance_accounts
+- id (PK)
+- account_code (UNIQUE)
+- account_name
+- account_type
+- parent_id (self FK)
+- active
+- created_at
+- updated_at
+- deleted_at

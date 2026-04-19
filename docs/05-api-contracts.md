@@ -272,3 +272,92 @@ Response example:
 - Default bootstrap account:
   - `loginId`: `admin`
   - `password`: `password`
+
+---
+
+## 11. B02 API Additions (Organization / Common Code)
+
+### Organizations
+
+- `GET /api/organizations?keyword=&active=&page=0&size=20`
+- `POST /api/organizations`
+- `PUT /api/organizations/{id}`
+- `DELETE /api/organizations/{id}` (soft delete)
+
+`POST /api/organizations` request example:
+```json
+{
+  "code": "ORG001",
+  "name": "±³À°ºÎ",
+  "parentId": null,
+  "type": "DEPARTMENT",
+  "active": true
+}
+```
+
+### Common Codes
+
+- `GET /api/common-codes?groupCode=&keyword=&active=&page=0&size=20`
+- `GET /api/common-codes/groups/{groupCode}?activeOnly=true`
+- `POST /api/common-codes`
+- `PUT /api/common-codes/{id}`
+- `DELETE /api/common-codes/{id}` (soft delete)
+
+`POST /api/common-codes` request example:
+```json
+{
+  "groupCode": "ORG_TYPE",
+  "code": "TEAM",
+  "name": "ÆÀ",
+  "sortOrder": 2,
+  "active": true,
+  "description": "Á¶Á÷ À¯Çü"
+}
+```
+
+### Audit
+
+- organization/common-code create/update/delete writes into `audit_logs`
+
+## 12. F01 API Additions (Finance Period / Account)
+
+### Finance Periods
+
+- `GET /api/finance/periods?fiscalYear=&status=&active=&page=0&size=20`
+- `POST /api/finance/periods`
+- `PUT /api/finance/periods/{id}`
+- `DELETE /api/finance/periods/{id}` (soft delete)
+
+`POST /api/finance/periods` request example:
+```json
+{
+  "fiscalYear": 2026,
+  "periodNo": 1,
+  "startDate": "2026-01-01",
+  "endDate": "2026-12-31",
+  "status": "OPEN",
+  "active": true
+}
+```
+
+### Finance Accounts
+
+- `GET /api/finance/accounts?accountType=&keyword=&active=&page=0&size=20`
+- `POST /api/finance/accounts`
+- `PUT /api/finance/accounts/{id}`
+- `DELETE /api/finance/accounts/{id}` (soft delete)
+
+`POST /api/finance/accounts` request example:
+```json
+{
+  "accountCode": "1100",
+  "accountName": "Cash",
+  "accountType": "ASSET",
+  "parentId": null,
+  "active": true
+}
+```
+
+### Audit
+
+- finance period/account create/update/delete writes into `audit_logs`

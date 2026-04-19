@@ -21,6 +21,8 @@ npm.cmd run dev
 - Login form
 - Current user info (`/api/auth/me`)
 - Logout
+- Organization management (search/register/update/delete)
+- Common code management (group query/search/register/update/delete)
 
 ## Build
 
@@ -28,3 +30,6 @@ npm.cmd run dev
 npm run lint
 npm run build
 ```
+
+- Finance period management (F01)
+- Finance account management (F01)

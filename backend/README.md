@@ -8,6 +8,9 @@ Spring Boot API for Church ERP.
 - `POST /api/auth/login`
 - `GET /api/auth/me`
 - `POST /api/auth/logout`
+- `GET/POST/PUT/DELETE /api/organizations`
+- `GET/POST/PUT/DELETE /api/common-codes`
+- `GET /api/common-codes/groups/{groupCode}`
 
 ## Default admin (seed)
 
@@ -26,3 +29,8 @@ Spring Boot API for Church ERP.
 .\mvnw.cmd clean test
 .\mvnw.cmd clean package
 ```
+
+## Finance endpoints (F01)
+
+- `GET/POST/PUT/DELETE /api/finance/periods`
+- `GET/POST/PUT/DELETE /api/finance/accounts`

@@ -48,3 +48,10 @@
 - [ ] 회계기수 CRUD 테스트
 - [ ] 계정과목 CRUD 테스트
 - [ ] 비활성 계정 조회 정책 테스트
+
+## 8. Implementation Notes (2026-04-19)
+
+- Implemented backend CRUD APIs for finance periods and finance accounts.
+- Added parent-child support for finance accounts and OPEN/CLOSED status handling for periods.
+- Added frontend management tabs for periods/accounts.
+- Added unit/controller tests for finance services/controllers.

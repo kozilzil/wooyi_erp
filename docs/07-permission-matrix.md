@@ -31,3 +31,18 @@
 - 메뉴 권한과 데이터 범위 권한을 분리해서 구현한다.
 - 목회자 권한은 “전체 수정”이 아니라 “소속 범위 제한”을 기본으로 한다.
 - 재정 승인 권한은 재정 등록 권한과 반드시 분리한다.
+
+---
+
+## 4. B02 Permissions Update
+
+- `SYS_ADMIN`: full C/R/U/D on organizations and common codes
+- `MEMBER_ADMIN`: read organizations/common codes
+- `FINANCE_ADMIN`: read organizations/common codes
+- `ASSET_ADMIN`: read organizations/common codes
+
+## 5. F01 Permissions Update
+
+- `SYS_ADMIN`: full C/R/U/D on finance periods and finance accounts
+- `FINANCE_ADMIN`: full C/R/U/D on finance periods and finance accounts
+- `FINANCE_USER`: read finance periods and finance accounts
