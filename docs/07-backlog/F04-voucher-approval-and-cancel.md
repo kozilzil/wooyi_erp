@@ -1,59 +1,59 @@
 # F04-voucher-approval-and-cancel
 
-## 1. 카드 정보
-- 카드 ID: F04
-- 제목: 전표 승인/반려/취소 및 장부 반영
-- 우선순위: P0
-- 모듈: 재정
-- 선행 작업: F02, F03
+## 1. Card Info
+- Card ID: F04
+- Title: Voucher approve/reject/cancel and ledger posting
+- Priority: P0
+- Module: Finance
+- Prerequisites: F02, F03
 
-## 2. 목표
-승인된 전표만 장부에 반영되고, 반려/취소/마감 정책이 일관되게 동작해야 한다.
+## 2. Goal
+Post to ledger only approved vouchers and enforce approval/cancel/period-close rules.
 
-## 3. 범위
-### 포함
-- 승인
-- 반려
-- 취소
-- 승인 이력 저장
-- ledger_entries 생성
-- 기간 마감/재개방 기본
+## 3. Scope
+### In
+- Approve
+- Reject
+- Cancel
+- Approval history
+- `ledger_entries` creation
+- Period close/reopen basics
 
-### 제외
-- 복잡한 다단계 결재선
-- 고급 결산 보고서
+### Out
+- Multi-step approval flow
+- Advanced reporting
 
-## 4. 구현 요구사항
-### 백엔드
-- 승인/반려/취소 command service 구현
-- voucher_approval_histories, ledger_entries 구현
-- finance_period close/reopen 구현
+## 4. Implementation Requirements
+### Backend
+- Implement command services for approve/reject/cancel
+- Implement `voucher_approval_histories` and `ledger_entries`
+- Implement finance period close/reopen APIs
 
-### 프런트엔드
-- 승인 대기 목록
-- 승인/반려/취소 액션 UI
-- 기간 마감 화면
+### Frontend
+- Pending approval list
+- Approve/reject/cancel action UI
+- Period close/reopen UI
 
-### 문서
-- finance-rules, API, ERD 갱신
+### Docs
+- Update finance rules, API contracts, and ERD
 
-## 5. 처리 규칙
-1. 승인 시 ledger_entries 생성
-2. 반려 시 장부 반영 금지
-3. 취소 시 취소 사유 필수
-4. 마감 후 수정/승인/취소 제한
-5. 재개방 권한은 관리자만 가능
+## 5. Business Rules
+1. Approval creates `ledger_entries`.
+2. Rejected vouchers do not post ledger.
+3. Cancel requires cancel reason.
+4. Closed period restricts update/approval/cancel.
+5. Reopen is admin-only.
 
 ## 6. Acceptance Criteria
-- [ ] 승인 시 장부 반영
-- [ ] 반려 시 장부 반영 안 됨
-- [ ] 취소 시 역처리 또는 상태 정책이 반영됨
-- [ ] 마감 후 변경 제한
-- [ ] 승인 이력 저장
+- [ ] Approve posts ledger entries.
+- [ ] Reject does not post ledger entries.
+- [ ] Cancel updates status/history correctly.
+- [ ] Closed period blocks restricted actions.
+- [ ] Approval history is persisted.
 
-## 7. 테스트
-- [ ] 승인 테스트
-- [ ] 반려 테스트
-- [ ] 취소 테스트
-- [ ] 마감 제한 테스트
-- [ ] 재개방 테스트
+## 7. Tests
+- [ ] Approve test
+- [ ] Reject test
+- [ ] Cancel test
+- [ ] Period-close restriction test
+- [ ] Reopen permission test

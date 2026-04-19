@@ -1,45 +1,45 @@
 # Backlog Template
 
-## 1. 카드 정보
-- 카드 ID:
-- 제목:
-- 우선순위:
-- 모듈:
-- 선행 작업:
+## 1. Card Info
+- Card ID:
+- Title:
+- Priority:
+- Module:
+- Prerequisites:
 
-## 2. 목표
-이 카드가 완료되면 무엇이 가능해져야 하는지 작성한다.
+## 2. Goal
+Describe what becomes possible when this card is complete.
 
-## 3. 범위
-### 포함
+## 3. Scope
+### In
 - 
 
-### 제외
+### Out
 - 
 
-## 4. 구현 요구사항
-### 백엔드
+## 4. Implementation Requirements
+### Backend
 - 
 
-### 프런트엔드
+### Frontend
 - 
 
 ### DB
 - 
 
-### 문서
+### Docs
 - 
 
-## 5. API / 화면
-- 관련 API:
-- 관련 화면:
-- 관련 엔터티:
+## 5. API / Screen
+- Related APIs:
+- Related screens:
+- Related entities:
 
-## 6. 처리 규칙
+## 6. Business Rules
 1. 
 2. 
 
-## 7. 예외 규칙
+## 7. Exception Rules
 1. 
 2. 
 
@@ -48,16 +48,16 @@
 - [ ]
 - [ ]
 
-## 9. 테스트
-- [ ] 단위 테스트
-- [ ] 통합 테스트
-- [ ] UI 확인
-- [ ] 문서 갱신
+## 9. Tests
+- [ ] Unit tests
+- [ ] Integration tests
+- [ ] UI checks
+- [ ] Document update
 
-## 10. 완료 보고 형식
-- 작업 카드:
-- 변경 요약:
-- 주요 파일:
-- 테스트 결과:
-- 남은 이슈:
-- 문서 갱신:
+## 10. Completion Report Format
+- Task card:
+- Change summary:
+- Key files:
+- Test results:
+- Remaining issues:
+- Documents updated:

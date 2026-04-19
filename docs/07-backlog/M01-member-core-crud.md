@@ -1,63 +1,63 @@
 # M01-member-core-crud
 
-## 1. 카드 정보
-- 카드 ID: M01
-- 제목: 회원 기본 CRUD
-- 우선순위: P0
-- 모듈: 교적
-- 선행 작업: B01, B02
+## 1. Card Info
+- Card ID: M01
+- Title: Member core CRUD
+- Priority: P0
+- Module: Member
+- Prerequisites: B01, B02
 
-## 2. 목표
-회원 기본정보를 등록, 조회, 수정, 삭제(논리삭제)할 수 있어야 한다.
+## 2. Goal
+Provide create/read/update/delete (soft delete) for member core profile data.
 
-## 3. 범위
-### 포함
-- 회원 목록
-- 회원 등록
-- 회원 상세
-- 회원 수정
-- 논리 삭제
-- 기본 검색/필터
+## 3. Scope
+### In
+- Member list
+- Member create
+- Member detail
+- Member update
+- Member soft delete
+- Basic search/filter
 
-### 제외
-- 가족 관계 상세 편집
-- 사진 업로드
-- 교육/심방
+### Out
+- Family relation editor
+- Photo upload
+- Education/visitation features
 
-## 4. 구현 요구사항
-### 백엔드
-- members 엔터티/API 구현
-- 검색 조건: 이름, 연락처, 상태, 부서
-- 논리 삭제 처리
+## 4. Implementation Requirements
+### Backend
+- Implement `members` entity and CRUD APIs
+- Search filters: name, phone, status, department
+- Use soft delete (`deleted_at`), no hard delete
 
-### 프런트엔드
-- 회원 목록 화면
-- 회원 등록/수정 폼
-- 상세 화면
+### Frontend
+- Member list screen
+- Member create/update screen
+- Member detail screen
 
-### 문서
-- API 계약 갱신
-- ERD 보정
-- 교적 기능명세 보완
+### Docs
+- Update API contracts
+- Update ERD
+- Update member feature spec
 
-## 5. 처리 규칙
-1. 이름은 필수
-2. 등록일은 기본 현재일 가능
-3. 삭제는 물리 삭제 금지
+## 5. Business Rules
+1. Name is required.
+2. Registration date defaults to current date.
+3. Delete must be soft delete via `deleted_at`.
 
-## 6. 예외 규칙
-1. 필수값 누락 시 저장 실패
-2. 존재하지 않는 회원 조회 시 404
+## 6. Exception Rules
+1. Missing required fields returns validation error.
+2. Not found member returns 404.
 
 ## 7. Acceptance Criteria
-- [ ] 회원 등록 가능
-- [ ] 회원 목록 검색 가능
-- [ ] 회원 상세/수정 가능
-- [ ] 회원 삭제 시 논리 삭제 처리
-- [ ] 생성자/수정자 메타데이터 저장
+- [ ] Member create works.
+- [ ] Member list search/filter works.
+- [ ] Member detail/update works.
+- [ ] Member delete is soft delete.
+- [ ] Created/updated metadata is persisted.
 
-## 8. 테스트
-- [ ] 등록 테스트
-- [ ] 검색 테스트
-- [ ] 수정 테스트
-- [ ] 논리 삭제 테스트
+## 8. Tests
+- [ ] Create test
+- [ ] Search test
+- [ ] Update test
+- [ ] Soft delete test

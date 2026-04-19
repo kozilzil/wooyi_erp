@@ -1,53 +1,53 @@
 # F03-double-entry-voucher
 
-## 1. 카드 정보
-- 카드 ID: F03
-- 제목: 복식부기 전표 등록/조회
-- 우선순위: P0
-- 모듈: 재정
-- 선행 작업: F01
+## 1. Card Info
+- Card ID: F03
+- Title: Double-entry voucher create/query
+- Priority: P0
+- Module: Finance
+- Prerequisites: F01
 
-## 2. 목표
-차변/대변 라인을 가진 복식부기 전표를 작성하고 조회할 수 있어야 한다.
+## 2. Goal
+Allow creating and querying double-entry vouchers with debit/credit lines.
 
-## 3. 범위
-### 포함
-- 복식부기 전표 등록
-- 목록/상세 조회
-- 수정/삭제(승인 전만)
-- 승인 요청
+## 3. Scope
+### In
+- Double-entry voucher create
+- List/detail query
+- Update/delete (before approval only)
+- Request approval
 
-### 제외
-- 승인 처리
-- 장부 반영
+### Out
+- Approval processing
+- Ledger posting
 
-## 4. 구현 요구사항
-### 백엔드
-- vouchers + voucher_lines 구현
-- bookkeeping_mode = DOUBLE 지원
-- 차변/대변 합계 검증
+## 4. Implementation Requirements
+### Backend
+- Implement `vouchers` + `voucher_lines`
+- Support `bookkeeping_mode=DOUBLE`
+- Validate debit total equals credit total
 
-### 프런트엔드
-- 복식부기 라인 입력 화면
-- 합계 표시 UI
+### Frontend
+- Double-entry line input UI
+- Debit/credit total summary UI
 
-### 문서
-- API 계약 갱신
-- finance-rules 갱신
+### Docs
+- Update API contracts
+- Update finance rules
 
-## 5. 처리 규칙
-1. 차변 합계와 대변 합계가 같아야 저장 가능
-2. 라인은 최소 2개 이상
-3. 마감된 기수 저장 불가
+## 5. Business Rules
+1. Debit total must equal credit total.
+2. At least 2 lines are required.
+3. Closed periods cannot accept voucher changes.
 
 ## 6. Acceptance Criteria
-- [ ] 복식부기 전표 등록 가능
-- [ ] 차변/대변 불일치 시 저장 실패
-- [ ] 목록/상세 조회 가능
-- [ ] 승인 요청 가능
+- [ ] Double-entry voucher create works.
+- [ ] Debit/credit mismatch fails validation.
+- [ ] List/detail query works.
+- [ ] Request approval works.
 
-## 7. 테스트
-- [ ] 정상 저장 테스트
-- [ ] 합계 불일치 실패 테스트
-- [ ] 라인 최소 개수 테스트
-- [ ] 마감 기수 차단 테스트
+## 7. Tests
+- [ ] Normal create test
+- [ ] Total mismatch fail test
+- [ ] Minimum line count test
+- [ ] Closed period block test
