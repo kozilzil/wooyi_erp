@@ -1,0 +1,24 @@
+package kr.church.erp.finance.voucher.dto;
+
+import jakarta.validation.Valid;
+import jakarta.validation.constraints.NotEmpty;
+import jakarta.validation.constraints.NotNull;
+import java.time.LocalDate;
+import java.util.List;
+
+public record VoucherCreateRequest(
+    @NotNull(message = "voucherType is required")
+    String voucherType,
+
+    @NotNull(message = "periodId is required")
+    Long periodId,
+
+    @NotNull(message = "voucherDate is required")
+    LocalDate voucherDate,
+
+    String description,
+
+    @NotEmpty(message = "lines is required")
+    List<@Valid VoucherLineRequest> lines
+) {
+}

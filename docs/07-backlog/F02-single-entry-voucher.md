@@ -52,3 +52,10 @@
 - [ ] 조회 테스트
 - [ ] 마감 기수 차단 테스트
 - [ ] 승인 요청 상태 전환 테스트
+
+## 9. Implementation Notes (2026-04-19)
+
+- Implemented single-entry voucher API (create/list/detail/update/delete/request-approval).
+- Added status transition: DRAFT -> REQUESTED.
+- Added period CLOSED guard for create/update/request.
+- Added frontend tab for single-entry voucher management.

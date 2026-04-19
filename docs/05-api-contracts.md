@@ -361,3 +361,38 @@ Response example:
 ### Audit
 
 - finance period/account create/update/delete writes into `audit_logs`
+
+## 13. F02 API Additions (Single Entry Voucher)
+
+### Vouchers
+
+- `GET /api/finance/vouchers?periodId=&voucherType=&status=&fromDate=&toDate=&page=0&size=20`
+- `GET /api/finance/vouchers/{id}`
+- `POST /api/finance/vouchers`
+- `PUT /api/finance/vouchers/{id}`
+- `DELETE /api/finance/vouchers/{id}` (soft delete)
+- `POST /api/finance/vouchers/{id}/request-approval`
+
+`POST /api/finance/vouchers` request example:
+```json
+{
+  "voucherType": "INCOME",
+  "periodId": 1,
+  "voucherDate": "2026-04-19",
+  "description": "林老清陛",
+  "lines": [
+    {
+      "accountId": 1,
+      "amount": 100000,
+      "description": "清陛 荐涝"
+    }
+  ]
+}
+```
+
+Rules:
+
+- bookkeepingMode fixed: `SINGLE`
+- status flow: `DRAFT -> REQUESTED`
+- only `DRAFT` can update/delete/request
+- closed period rejects create/update/request

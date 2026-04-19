@@ -34,3 +34,6 @@ Spring Boot API for Church ERP.
 
 - `GET/POST/PUT/DELETE /api/finance/periods`
 - `GET/POST/PUT/DELETE /api/finance/accounts`
+
+- `GET/POST/PUT/DELETE /api/finance/vouchers`
+- `POST /api/finance/vouchers/{id}/request-approval`

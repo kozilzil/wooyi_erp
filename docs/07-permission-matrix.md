@@ -46,3 +46,9 @@
 - `SYS_ADMIN`: full C/R/U/D on finance periods and finance accounts
 - `FINANCE_ADMIN`: full C/R/U/D on finance periods and finance accounts
 - `FINANCE_USER`: read finance periods and finance accounts
+
+## 6. F02 Permissions Update
+
+- `SYS_ADMIN`: full C/R/U/D + request-approval on single-entry vouchers
+- `FINANCE_ADMIN`: full C/R/U/D + request-approval on single-entry vouchers
+- `FINANCE_USER`: C/R/U on draft voucher and request-approval (approval processing Á¦¿Ü)

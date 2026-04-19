@@ -375,3 +375,30 @@ Implemented tables:
 - created_at
 - updated_at
 - deleted_at
+
+## 9. F02 Physical Schema Notes
+
+Implemented tables:
+
+### vouchers
+- id (PK)
+- voucher_no (UNIQUE)
+- voucher_type (INCOME, EXPENSE)
+- bookkeeping_mode (SINGLE)
+- period_id (FK -> finance_periods)
+- voucher_date
+- status (DRAFT, REQUESTED)
+- description
+- total_amount
+- created_at
+- updated_at
+- deleted_at
+
+### voucher_lines
+- id (PK)
+- voucher_id (FK -> vouchers)
+- line_no
+- account_id (FK -> finance_accounts)
+- amount (positive integer)
+- description
+- created_at

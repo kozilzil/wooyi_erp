@@ -8,6 +8,15 @@ const emptyOrgForm = { code: '', name: '', type: '', parentId: '', active: true 
 const emptyCodeForm = { groupCode: '', code: '', name: '', sortOrder: 0, description: '', active: true }
 const emptyPeriodForm = { fiscalYear: new Date().getFullYear(), periodNo: 1, startDate: '', endDate: '', status: 'OPEN', active: true }
 const emptyAccountForm = { accountCode: '', accountName: '', accountType: 'ASSET', parentId: '', active: true }
+const emptyVoucherForm = {
+  voucherType: 'INCOME',
+  periodId: '',
+  voucherDate: '',
+  description: '',
+  accountId: '',
+  amount: '',
+  lineDescription: '',
+}
 
 function App() {
   const [tab, setTab] = useState('org')
@@ -45,6 +54,15 @@ function App() {
   const [accountForm, setAccountForm] = useState(emptyAccountForm)
   const [accountEditId, setAccountEditId] = useState(null)
 
+  const [voucherPeriodFilter, setVoucherPeriodFilter] = useState('')
+  const [voucherTypeFilter, setVoucherTypeFilter] = useState('')
+  const [voucherStatusFilter, setVoucherStatusFilter] = useState('')
+  const [voucherFromDate, setVoucherFromDate] = useState('')
+  const [voucherToDate, setVoucherToDate] = useState('')
+  const [voucherItems, setVoucherItems] = useState([])
+  const [voucherForm, setVoucherForm] = useState(emptyVoucherForm)
+  const [voucherEditId, setVoucherEditId] = useState(null)
+
   const loggedIn = useMemo(() => token.length > 0 && user !== null, [token, user])
 
   useEffect(() => {
@@ -73,6 +91,7 @@ function App() {
           loadCommonCodes(token),
           loadFinancePeriods(token),
           loadFinanceAccounts(token),
+          loadVouchers(token),
         ])
       } catch (err) {
         if (!cancelled) {
@@ -165,6 +184,17 @@ function App() {
     if (accountActiveFilter !== '') query.set('active', accountActiveFilter)
     const data = await api(`/api/finance/accounts?${query.toString()}`, {}, customToken)
     setAccountItems(data.items)
+  }
+
+  async function loadVouchers(customToken = token) {
+    const query = new URLSearchParams({ page: '0', size: '100' })
+    if (voucherPeriodFilter !== '') query.set('periodId', voucherPeriodFilter)
+    if (voucherTypeFilter !== '') query.set('voucherType', voucherTypeFilter)
+    if (voucherStatusFilter !== '') query.set('status', voucherStatusFilter)
+    if (voucherFromDate) query.set('fromDate', voucherFromDate)
+    if (voucherToDate) query.set('toDate', voucherToDate)
+    const data = await api(`/api/finance/vouchers?${query.toString()}`, {}, customToken)
+    setVoucherItems(data.items)
   }
 
   async function submitOrganization(event) {
@@ -345,6 +375,66 @@ function App() {
     }
   }
 
+  async function submitVoucher(event) {
+    event.preventDefault()
+    setError('')
+    try {
+      const payload = {
+        voucherType: voucherForm.voucherType,
+        periodId: Number(voucherForm.periodId),
+        voucherDate: voucherForm.voucherDate,
+        description: voucherForm.description.trim() || null,
+        lines: [{
+          accountId: Number(voucherForm.accountId),
+          amount: Number(voucherForm.amount),
+          description: voucherForm.lineDescription.trim() || null,
+        }],
+      }
+      if (!payload.periodId || !payload.voucherDate || !payload.lines[0].accountId || !payload.lines[0].amount) {
+        throw new Error('기수/전표일자/계정/금액은 필수입니다.')
+      }
+      if (payload.lines[0].amount <= 0) {
+        throw new Error('금액은 1 이상이어야 합니다.')
+      }
+
+      if (voucherEditId) {
+        await api(`/api/finance/vouchers/${voucherEditId}`, {
+          method: 'PUT',
+          body: JSON.stringify({
+            voucherDate: payload.voucherDate,
+            description: payload.description,
+            lines: payload.lines,
+          }),
+        })
+      } else {
+        await api('/api/finance/vouchers', { method: 'POST', body: JSON.stringify(payload) })
+      }
+      setVoucherForm(emptyVoucherForm)
+      setVoucherEditId(null)
+      await loadVouchers()
+    } catch (err) {
+      setError(err.message)
+    }
+  }
+
+  async function removeVoucher(id) {
+    try {
+      await api(`/api/finance/vouchers/${id}`, { method: 'DELETE' })
+      await loadVouchers()
+    } catch (err) {
+      setError(err.message)
+    }
+  }
+
+  async function requestVoucherApproval(id) {
+    try {
+      await api(`/api/finance/vouchers/${id}/request-approval`, { method: 'POST' })
+      await loadVouchers()
+    } catch (err) {
+      setError(err.message)
+    }
+  }
+
   function selectOrg(item) {
     setOrgEditId(item.id)
     setOrgForm({
@@ -391,6 +481,20 @@ function App() {
     })
   }
 
+  function selectVoucher(item) {
+    const line = item.lines?.[0]
+    setVoucherEditId(item.id)
+    setVoucherForm({
+      voucherType: item.voucherType,
+      periodId: item.periodId || '',
+      voucherDate: item.voucherDate || '',
+      description: item.description || '',
+      accountId: line?.accountId || '',
+      amount: line?.amount || '',
+      lineDescription: line?.description || '',
+    })
+  }
+
   if (!loggedIn) {
     return (
       <main className="app-shell">
@@ -425,6 +529,7 @@ function App() {
           <button type="button" className={tab === 'code' ? 'active' : ''} onClick={() => setTab('code')}>공통코드</button>
           <button type="button" className={tab === 'period' ? 'active' : ''} onClick={() => setTab('period')}>회계기간</button>
           <button type="button" className={tab === 'account' ? 'active' : ''} onClick={() => setTab('account')}>계정과목</button>
+          <button type="button" className={tab === 'voucher' ? 'active' : ''} onClick={() => setTab('voucher')}>단식전표</button>
         </div>
 
         {tab === 'org' && (
@@ -622,6 +727,69 @@ function App() {
                 <label className="check"><input type="checkbox" checked={accountForm.active} onChange={(e) => setAccountForm({ ...accountForm, active: e.target.checked })} /> 활성</label>
                 <button type="submit">저장</button>
               </form>
+            </article>
+          </section>
+        )}
+
+        {tab === 'voucher' && (
+          <section className="panel-grid">
+            <article className="panel">
+              <h2>단식전표 조회</h2>
+              <div className="filter-row">
+                <input type="number" placeholder="기수ID" value={voucherPeriodFilter} onChange={(e) => setVoucherPeriodFilter(e.target.value)} />
+                <select value={voucherTypeFilter} onChange={(e) => setVoucherTypeFilter(e.target.value)}>
+                  <option value="">전체유형</option>
+                  <option value="INCOME">INCOME</option>
+                  <option value="EXPENSE">EXPENSE</option>
+                </select>
+                <select value={voucherStatusFilter} onChange={(e) => setVoucherStatusFilter(e.target.value)}>
+                  <option value="">전체상태</option>
+                  <option value="DRAFT">DRAFT</option>
+                  <option value="REQUESTED">REQUESTED</option>
+                </select>
+                <input type="date" value={voucherFromDate} onChange={(e) => setVoucherFromDate(e.target.value)} />
+                <input type="date" value={voucherToDate} onChange={(e) => setVoucherToDate(e.target.value)} />
+                <button type="button" onClick={() => void loadVouchers()}>검색</button>
+              </div>
+              <div className="list">
+                {voucherItems.map((item) => (
+                  <div key={item.id} className="row">
+                    <button type="button" className="row-main" onClick={() => selectVoucher(item)}>
+                      <strong>{item.voucherNo}</strong> {item.voucherType} {item.totalAmount.toLocaleString()}원 ({item.status})
+                    </button>
+                    <button type="button" className="danger" onClick={() => void removeVoucher(item.id)}>삭제</button>
+                  </div>
+                ))}
+              </div>
+            </article>
+
+            <article className="panel">
+              <h2>{voucherEditId ? '단식전표 수정' : '단식전표 등록'}</h2>
+              <form className="form" onSubmit={submitVoucher}>
+                <label>전표유형</label>
+                <select value={voucherForm.voucherType} disabled={Boolean(voucherEditId)} onChange={(e) => setVoucherForm({ ...voucherForm, voucherType: e.target.value })}>
+                  <option value="INCOME">INCOME</option>
+                  <option value="EXPENSE">EXPENSE</option>
+                </select>
+                <label>회계기수 ID</label>
+                <input type="number" value={voucherForm.periodId} disabled={Boolean(voucherEditId)} onChange={(e) => setVoucherForm({ ...voucherForm, periodId: e.target.value })} required />
+                <label>전표일자</label>
+                <input type="date" value={voucherForm.voucherDate} onChange={(e) => setVoucherForm({ ...voucherForm, voucherDate: e.target.value })} required />
+                <label>적요</label>
+                <input value={voucherForm.description} onChange={(e) => setVoucherForm({ ...voucherForm, description: e.target.value })} />
+                <label>계정 ID</label>
+                <input type="number" value={voucherForm.accountId} onChange={(e) => setVoucherForm({ ...voucherForm, accountId: e.target.value })} required />
+                <label>금액</label>
+                <input type="number" min="1" value={voucherForm.amount} onChange={(e) => setVoucherForm({ ...voucherForm, amount: e.target.value })} required />
+                <label>라인 적요</label>
+                <input value={voucherForm.lineDescription} onChange={(e) => setVoucherForm({ ...voucherForm, lineDescription: e.target.value })} />
+                <button type="submit">저장</button>
+              </form>
+              {voucherEditId && (
+                <button type="button" style={{ marginTop: '0.5rem' }} onClick={() => void requestVoucherApproval(voucherEditId)}>
+                  승인요청
+                </button>
+              )}
             </article>
           </section>
         )}

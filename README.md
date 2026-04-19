@@ -135,3 +135,16 @@ Frontend:
 
 - finance period management tab (search/register/update/delete)
 - finance account management tab (search/register/update/delete)
+
+## Single Entry Voucher Bootstrap (F02)
+
+Implemented APIs:
+
+- `GET/POST/PUT/DELETE /api/finance/vouchers`
+- `POST /api/finance/vouchers/{id}/request-approval`
+
+Rules:
+
+- `bookkeeping_mode` is fixed to `SINGLE`
+- only `DRAFT` vouchers can be updated/deleted/requested
+- closed period cannot accept voucher create/update/request

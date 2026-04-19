@@ -33,3 +33,5 @@ npm run build
 
 - Finance period management (F01)
 - Finance account management (F01)
+
+- Single-entry voucher management tab (register/list/update/delete/request approval)
