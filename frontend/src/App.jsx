@@ -17,6 +17,17 @@ const emptyVoucherForm = {
   amount: '',
   lineDescription: '',
 }
+const emptyDoubleVoucherForm = {
+  periodId: '',
+  voucherDate: '',
+  description: '',
+  debitAccountId: '',
+  debitAmount: '',
+  debitDescription: '',
+  creditAccountId: '',
+  creditAmount: '',
+  creditDescription: '',
+}
 
 function App() {
   const [tab, setTab] = useState('org')
@@ -62,6 +73,8 @@ function App() {
   const [voucherItems, setVoucherItems] = useState([])
   const [voucherForm, setVoucherForm] = useState(emptyVoucherForm)
   const [voucherEditId, setVoucherEditId] = useState(null)
+  const [doubleVoucherItems, setDoubleVoucherItems] = useState([])
+  const [doubleVoucherForm, setDoubleVoucherForm] = useState(emptyDoubleVoucherForm)
 
   const loggedIn = useMemo(() => token.length > 0 && user !== null, [token, user])
 
@@ -194,7 +207,8 @@ function App() {
     if (voucherFromDate) query.set('fromDate', voucherFromDate)
     if (voucherToDate) query.set('toDate', voucherToDate)
     const data = await api(`/api/finance/vouchers?${query.toString()}`, {}, customToken)
-    setVoucherItems(data.items)
+    setVoucherItems(data.items.filter((item) => item.bookkeepingMode === 'SINGLE'))
+    setDoubleVoucherItems(data.items.filter((item) => item.bookkeepingMode === 'DOUBLE'))
   }
 
   async function submitOrganization(event) {
@@ -380,11 +394,13 @@ function App() {
     setError('')
     try {
       const payload = {
+        bookkeepingMode: 'SINGLE',
         voucherType: voucherForm.voucherType,
         periodId: Number(voucherForm.periodId),
         voucherDate: voucherForm.voucherDate,
         description: voucherForm.description.trim() || null,
         lines: [{
+          dcType: null,
           accountId: Number(voucherForm.accountId),
           amount: Number(voucherForm.amount),
           description: voucherForm.lineDescription.trim() || null,
@@ -411,6 +427,47 @@ function App() {
       }
       setVoucherForm(emptyVoucherForm)
       setVoucherEditId(null)
+      await loadVouchers()
+    } catch (err) {
+      setError(err.message)
+    }
+  }
+
+  async function submitDoubleVoucher(event) {
+    event.preventDefault()
+    setError('')
+    try {
+      const payload = {
+        bookkeepingMode: 'DOUBLE',
+        voucherType: 'GENERAL',
+        periodId: Number(doubleVoucherForm.periodId),
+        voucherDate: doubleVoucherForm.voucherDate,
+        description: doubleVoucherForm.description.trim() || null,
+        lines: [
+          {
+            dcType: 'DEBIT',
+            accountId: Number(doubleVoucherForm.debitAccountId),
+            amount: Number(doubleVoucherForm.debitAmount),
+            description: doubleVoucherForm.debitDescription.trim() || null,
+          },
+          {
+            dcType: 'CREDIT',
+            accountId: Number(doubleVoucherForm.creditAccountId),
+            amount: Number(doubleVoucherForm.creditAmount),
+            description: doubleVoucherForm.creditDescription.trim() || null,
+          },
+        ],
+      }
+
+      if (!payload.periodId || !payload.voucherDate || !payload.lines[0].accountId || !payload.lines[1].accountId) {
+        throw new Error('기수/전표일자/차변계정/대변계정은 필수입니다.')
+      }
+      if (payload.lines[0].amount <= 0 || payload.lines[1].amount <= 0) {
+        throw new Error('금액은 1 이상이어야 합니다.')
+      }
+
+      await api('/api/finance/vouchers', { method: 'POST', body: JSON.stringify(payload) })
+      setDoubleVoucherForm(emptyDoubleVoucherForm)
       await loadVouchers()
     } catch (err) {
       setError(err.message)
@@ -530,6 +587,7 @@ function App() {
           <button type="button" className={tab === 'period' ? 'active' : ''} onClick={() => setTab('period')}>회계기간</button>
           <button type="button" className={tab === 'account' ? 'active' : ''} onClick={() => setTab('account')}>계정과목</button>
           <button type="button" className={tab === 'voucher' ? 'active' : ''} onClick={() => setTab('voucher')}>단식전표</button>
+          <button type="button" className={tab === 'doubleVoucher' ? 'active' : ''} onClick={() => setTab('doubleVoucher')}>복식전표</button>
         </div>
 
         {tab === 'org' && (
@@ -790,6 +848,64 @@ function App() {
                   승인요청
                 </button>
               )}
+            </article>
+          </section>
+        )}
+
+        {tab === 'doubleVoucher' && (
+          <section className="panel-grid">
+            <article className="panel">
+              <h2>복식전표 조회</h2>
+              <div className="filter-row">
+                <input type="number" placeholder="기수ID" value={voucherPeriodFilter} onChange={(e) => setVoucherPeriodFilter(e.target.value)} />
+                <select value={voucherStatusFilter} onChange={(e) => setVoucherStatusFilter(e.target.value)}>
+                  <option value="">전체상태</option>
+                  <option value="DRAFT">DRAFT</option>
+                  <option value="REQUESTED">REQUESTED</option>
+                </select>
+                <input type="date" value={voucherFromDate} onChange={(e) => setVoucherFromDate(e.target.value)} />
+                <input type="date" value={voucherToDate} onChange={(e) => setVoucherToDate(e.target.value)} />
+                <button type="button" onClick={() => void loadVouchers()}>검색</button>
+              </div>
+              <div className="list">
+                {doubleVoucherItems.map((item) => (
+                  <div key={item.id} className="row">
+                    <button type="button" className="row-main">
+                      <strong>{item.voucherNo}</strong> DEBIT/CREDIT {item.totalAmount.toLocaleString()}원 ({item.status})
+                    </button>
+                    <button type="button" className="danger" onClick={() => void removeVoucher(item.id)}>삭제</button>
+                  </div>
+                ))}
+              </div>
+            </article>
+
+            <article className="panel">
+              <h2>복식전표 등록</h2>
+              <form className="form" onSubmit={submitDoubleVoucher}>
+                <label>회계기수 ID</label>
+                <input type="number" value={doubleVoucherForm.periodId} onChange={(e) => setDoubleVoucherForm({ ...doubleVoucherForm, periodId: e.target.value })} required />
+                <label>전표일자</label>
+                <input type="date" value={doubleVoucherForm.voucherDate} onChange={(e) => setDoubleVoucherForm({ ...doubleVoucherForm, voucherDate: e.target.value })} required />
+                <label>적요</label>
+                <input value={doubleVoucherForm.description} onChange={(e) => setDoubleVoucherForm({ ...doubleVoucherForm, description: e.target.value })} />
+
+                <label>차변 계정 ID</label>
+                <input type="number" value={doubleVoucherForm.debitAccountId} onChange={(e) => setDoubleVoucherForm({ ...doubleVoucherForm, debitAccountId: e.target.value })} required />
+                <label>차변 금액</label>
+                <input type="number" min="1" value={doubleVoucherForm.debitAmount} onChange={(e) => setDoubleVoucherForm({ ...doubleVoucherForm, debitAmount: e.target.value })} required />
+                <label>차변 적요</label>
+                <input value={doubleVoucherForm.debitDescription} onChange={(e) => setDoubleVoucherForm({ ...doubleVoucherForm, debitDescription: e.target.value })} />
+
+                <label>대변 계정 ID</label>
+                <input type="number" value={doubleVoucherForm.creditAccountId} onChange={(e) => setDoubleVoucherForm({ ...doubleVoucherForm, creditAccountId: e.target.value })} required />
+                <label>대변 금액</label>
+                <input type="number" min="1" value={doubleVoucherForm.creditAmount} onChange={(e) => setDoubleVoucherForm({ ...doubleVoucherForm, creditAmount: e.target.value })} required />
+                <label>대변 적요</label>
+                <input value={doubleVoucherForm.creditDescription} onChange={(e) => setDoubleVoucherForm({ ...doubleVoucherForm, creditDescription: e.target.value })} />
+
+                <p>합계 확인: 차변 {Number(doubleVoucherForm.debitAmount || 0).toLocaleString()} / 대변 {Number(doubleVoucherForm.creditAmount || 0).toLocaleString()}</p>
+                <button type="submit">저장</button>
+              </form>
             </article>
           </section>
         )}

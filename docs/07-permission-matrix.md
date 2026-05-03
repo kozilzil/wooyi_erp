@@ -52,3 +52,9 @@
 - `SYS_ADMIN`: full C/R/U/D + request-approval on single-entry vouchers
 - `FINANCE_ADMIN`: full C/R/U/D + request-approval on single-entry vouchers
 - `FINANCE_USER`: C/R/U on draft voucher and request-approval (approval processing Á¦¿Ü)
+
+## 7. F03 Permissions Update
+
+- `SYS_ADMIN`: full C/R/U/D + request-approval on DOUBLE vouchers
+- `FINANCE_ADMIN`: full C/R/U/D + request-approval on DOUBLE vouchers
+- `FINANCE_USER`: create/update on DRAFT DOUBLE vouchers and request-approval

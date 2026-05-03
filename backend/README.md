@@ -37,3 +37,6 @@ Spring Boot API for Church ERP.
 
 - `GET/POST/PUT/DELETE /api/finance/vouchers`
 - `POST /api/finance/vouchers/{id}/request-approval`
+
+- `POST /api/finance/vouchers` supports `bookkeepingMode=DOUBLE`
+- `voucher_lines.dc_type` supports `DEBIT` / `CREDIT`

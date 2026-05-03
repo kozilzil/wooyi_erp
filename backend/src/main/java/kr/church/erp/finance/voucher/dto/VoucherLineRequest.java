@@ -4,6 +4,8 @@ import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotNull;
 
 public record VoucherLineRequest(
+    String dcType,
+
     @NotNull(message = "accountId is required")
     Long accountId,
 

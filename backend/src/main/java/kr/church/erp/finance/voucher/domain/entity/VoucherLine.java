@@ -22,6 +22,9 @@ public class VoucherLine {
     @Column(name = "line_no", nullable = false)
     private int lineNo;
 
+    @Column(name = "dc_type", length = 10)
+    private String dcType;
+
     @Column(name = "account_id", nullable = false)
     private Long accountId;
 
@@ -37,10 +40,18 @@ public class VoucherLine {
     protected VoucherLine() {
     }
 
-    public static VoucherLine create(Long voucherId, int lineNo, Long accountId, long amount, String description) {
+    public static VoucherLine create(
+        Long voucherId,
+        int lineNo,
+        String dcType,
+        Long accountId,
+        long amount,
+        String description
+    ) {
         VoucherLine line = new VoucherLine();
         line.voucherId = voucherId;
         line.lineNo = lineNo;
+        line.dcType = dcType;
         line.accountId = accountId;
         line.amount = amount;
         line.description = description;
@@ -58,6 +69,10 @@ public class VoucherLine {
 
     public int getLineNo() {
         return lineNo;
+    }
+
+    public String getDcType() {
+        return dcType;
     }
 
     public Long getAccountId() {

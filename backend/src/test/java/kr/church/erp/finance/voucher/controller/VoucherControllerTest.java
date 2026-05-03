@@ -41,17 +41,18 @@ class VoucherControllerTest {
     void createSuccess() throws Exception {
         when(voucherService.create(any())).thenReturn(new VoucherResponse(
             1L, "SV-1", "INCOME", "SINGLE", 1L, LocalDate.parse("2026-04-01"),
-            "DRAFT", "헌금", 1000L, List.of()
+            "DRAFT", "offering", 1000L, List.of()
         ));
 
         mockMvc.perform(post("/api/finance/vouchers")
                 .contentType("application/json")
                 .content(objectMapper.writeValueAsString(new VoucherCreateRequest(
+                    "SINGLE",
                     "INCOME",
                     1L,
                     LocalDate.parse("2026-04-01"),
-                    "헌금",
-                    List.of(new VoucherLineRequest(10L, 1000L, "주일헌금"))
+                    "offering",
+                    List.of(new VoucherLineRequest(null, 10L, 1000L, "sunday offering"))
                 ))))
             .andExpect(status().isOk())
             .andExpect(jsonPath("$.data.bookkeepingMode").value("SINGLE"));
@@ -62,8 +63,8 @@ class VoucherControllerTest {
         when(voucherService.search(any(), any(), any(), any(), any(), any()))
             .thenReturn(new PageImpl<>(
                 List.of(new VoucherResponse(
-                    1L, "SV-1", "INCOME", "SINGLE", 1L, LocalDate.parse("2026-04-01"),
-                    "DRAFT", "헌금", 1000L, List.of()
+                    1L, "DV-1", "GENERAL", "DOUBLE", 1L, LocalDate.parse("2026-04-01"),
+                    "DRAFT", "double voucher", 1000L, List.of()
                 )),
                 PageRequest.of(0, 20),
                 1
@@ -71,6 +72,6 @@ class VoucherControllerTest {
 
         mockMvc.perform(get("/api/finance/vouchers"))
             .andExpect(status().isOk())
-            .andExpect(jsonPath("$.data.items[0].voucherType").value("INCOME"));
+            .andExpect(jsonPath("$.data.items[0].bookkeepingMode").value("DOUBLE"));
     }
 }

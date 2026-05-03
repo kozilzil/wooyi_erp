@@ -396,3 +396,36 @@ Rules:
 - status flow: `DRAFT -> REQUESTED`
 - only `DRAFT` can update/delete/request
 - closed period rejects create/update/request
+
+## 14. F03 API Additions (Double Entry Voucher)
+
+### Vouchers (DOUBLE)
+
+- `POST /api/finance/vouchers` with `bookkeepingMode=DOUBLE`
+- `GET /api/finance/vouchers` (includes DOUBLE vouchers)
+- `GET /api/finance/vouchers/{id}`
+- `PUT /api/finance/vouchers/{id}` (DRAFT only)
+- `DELETE /api/finance/vouchers/{id}` (DRAFT only, soft delete)
+- `POST /api/finance/vouchers/{id}/request-approval` (DRAFT only)
+
+`POST /api/finance/vouchers` DOUBLE request example:
+```json
+{
+  "bookkeepingMode": "DOUBLE",
+  "voucherType": "GENERAL",
+  "periodId": 1,
+  "voucherDate": "2026-05-03",
+  "description": "office supplies",
+  "lines": [
+    { "dcType": "DEBIT", "accountId": 101, "amount": 100000, "description": "expense" },
+    { "dcType": "CREDIT", "accountId": 201, "amount": 100000, "description": "cash" }
+  ]
+}
+```
+
+Rules:
+
+- `bookkeepingMode=DOUBLE` requires at least 2 lines
+- each line requires `dcType` (`DEBIT` or `CREDIT`)
+- DEBIT total must equal CREDIT total
+- closed period rejects create/update/request

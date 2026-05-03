@@ -5,6 +5,7 @@ import kr.church.erp.finance.voucher.domain.entity.VoucherLine;
 public record VoucherLineResponse(
     Long id,
     int lineNo,
+    String dcType,
     Long accountId,
     long amount,
     String description
@@ -13,6 +14,7 @@ public record VoucherLineResponse(
         return new VoucherLineResponse(
             line.getId(),
             line.getLineNo(),
+            line.getDcType(),
             line.getAccountId(),
             line.getAmount(),
             line.getDescription()

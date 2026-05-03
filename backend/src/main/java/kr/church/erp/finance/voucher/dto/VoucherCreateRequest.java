@@ -7,6 +7,8 @@ import java.time.LocalDate;
 import java.util.List;
 
 public record VoucherCreateRequest(
+    String bookkeepingMode,
+
     @NotNull(message = "voucherType is required")
     String voucherType,
 

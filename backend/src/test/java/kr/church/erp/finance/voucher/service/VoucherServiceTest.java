@@ -54,10 +54,10 @@ class VoucherServiceTest {
     }
 
     @Test
-    void createSuccess() throws Exception {
+    void createSingleSuccess() throws Exception {
         FinancePeriod period = FinancePeriod.create(2026, 1, LocalDate.parse("2026-01-01"), LocalDate.parse("2026-12-31"), "OPEN", true);
         FinanceAccount account = FinanceAccount.create("1100", "Cash", "ASSET", null, true);
-        Voucher voucher = Voucher.create("SV-1", "INCOME", 1L, LocalDate.parse("2026-04-01"), "헌금", 1000L);
+        Voucher voucher = Voucher.create("SV-1", "SINGLE", "INCOME", 1L, LocalDate.parse("2026-04-01"), "offering", 1000L);
         setId(voucher, 1L);
 
         when(financePeriodRepository.findByIdAndDeletedAtIsNull(1L)).thenReturn(Optional.of(period));
@@ -66,11 +66,12 @@ class VoucherServiceTest {
         when(voucherLineRepository.saveAll(any())).thenAnswer(inv -> inv.getArgument(0));
 
         var result = voucherService.create(new VoucherCreateRequest(
+            "SINGLE",
             "INCOME",
             1L,
             LocalDate.parse("2026-04-01"),
-            "헌금",
-            List.of(new VoucherLineRequest(10L, 1000L, "주일헌금"))
+            "offering",
+            List.of(new VoucherLineRequest(null, 10L, 1000L, "sunday offering"))
         ));
 
         assertThat(result.status()).isEqualTo("DRAFT");
@@ -85,11 +86,12 @@ class VoucherServiceTest {
         when(financePeriodRepository.findByIdAndDeletedAtIsNull(1L)).thenReturn(Optional.of(period));
 
         assertThatThrownBy(() -> voucherService.create(new VoucherCreateRequest(
+            "SINGLE",
             "INCOME",
             1L,
             LocalDate.parse("2026-04-01"),
-            "헌금",
-            List.of(new VoucherLineRequest(10L, 1000L, "주일헌금"))
+            "offering",
+            List.of(new VoucherLineRequest(null, 10L, 1000L, "sunday offering"))
         ))).isInstanceOf(IllegalArgumentException.class)
             .hasMessageContaining("Closed period");
     }
@@ -97,7 +99,7 @@ class VoucherServiceTest {
     @Test
     void requestApprovalSuccess() throws Exception {
         FinancePeriod period = FinancePeriod.create(2026, 1, LocalDate.parse("2026-01-01"), LocalDate.parse("2026-12-31"), "OPEN", true);
-        Voucher voucher = Voucher.create("SV-1", "INCOME", 1L, LocalDate.parse("2026-04-01"), "헌금", 1000L);
+        Voucher voucher = Voucher.create("SV-1", "SINGLE", "INCOME", 1L, LocalDate.parse("2026-04-01"), "offering", 1000L);
         setId(voucher, 1L);
 
         when(voucherRepository.findByIdAndDeletedAtIsNull(1L)).thenReturn(Optional.of(voucher));
@@ -108,6 +110,29 @@ class VoucherServiceTest {
 
         assertThat(result.status()).isEqualTo("REQUESTED");
         verify(auditLogService).log(any(), any(), any(), any(), any(), any(), any());
+    }
+
+    @Test
+    void createDoubleFailWhenDebitCreditNotEqual() {
+        FinancePeriod period = FinancePeriod.create(2026, 1, LocalDate.parse("2026-01-01"), LocalDate.parse("2026-12-31"), "OPEN", true);
+        FinanceAccount debit = FinanceAccount.create("5100", "Expense", "EXPENSE", null, true);
+        FinanceAccount credit = FinanceAccount.create("1100", "Cash", "ASSET", null, true);
+        when(financePeriodRepository.findByIdAndDeletedAtIsNull(1L)).thenReturn(Optional.of(period));
+        when(financeAccountRepository.findByIdAndDeletedAtIsNull(10L)).thenReturn(Optional.of(debit));
+        when(financeAccountRepository.findByIdAndDeletedAtIsNull(11L)).thenReturn(Optional.of(credit));
+
+        assertThatThrownBy(() -> voucherService.create(new VoucherCreateRequest(
+            "DOUBLE",
+            "GENERAL",
+            1L,
+            LocalDate.parse("2026-04-01"),
+            "office supplies",
+            List.of(
+                new VoucherLineRequest("DEBIT", 10L, 1200L, "debit"),
+                new VoucherLineRequest("CREDIT", 11L, 1000L, "credit")
+            )
+        ))).isInstanceOf(IllegalArgumentException.class)
+            .hasMessageContaining("DEBIT total must equal CREDIT total");
     }
 
     private static void setId(Voucher voucher, Long id) throws Exception {

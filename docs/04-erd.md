@@ -402,3 +402,13 @@ Implemented tables:
 - amount (positive integer)
 - description
 - created_at
+
+## 10. F03 Physical Schema Notes
+
+Changes:
+
+### voucher_lines
+- added `dc_type` (`DEBIT` or `CREDIT`) for DOUBLE bookkeeping mode
+
+### vouchers
+- `bookkeeping_mode` now used for both `SINGLE` and `DOUBLE`

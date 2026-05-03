@@ -148,3 +148,16 @@ Rules:
 - `bookkeeping_mode` is fixed to `SINGLE`
 - only `DRAFT` vouchers can be updated/deleted/requested
 - closed period cannot accept voucher create/update/request
+
+## Double Entry Voucher Bootstrap (F03)
+
+Implemented API extension:
+
+- `POST /api/finance/vouchers` supports `bookkeepingMode=DOUBLE`
+- `voucher_lines.dc_type` supports `DEBIT` / `CREDIT`
+
+Rules:
+
+- DOUBLE requires at least 2 lines
+- DEBIT total must equal CREDIT total
+- closed period rejects create/update/request

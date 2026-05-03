@@ -55,6 +55,7 @@ public class Voucher {
 
     public static Voucher create(
         String voucherNo,
+        String bookkeepingMode,
         String voucherType,
         Long periodId,
         LocalDate voucherDate,
@@ -64,7 +65,7 @@ public class Voucher {
         Voucher voucher = new Voucher();
         voucher.voucherNo = voucherNo;
         voucher.voucherType = voucherType;
-        voucher.bookkeepingMode = "SINGLE";
+        voucher.bookkeepingMode = bookkeepingMode;
         voucher.periodId = periodId;
         voucher.voucherDate = voucherDate;
         voucher.status = "DRAFT";

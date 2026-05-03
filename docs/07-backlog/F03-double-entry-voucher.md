@@ -51,3 +51,9 @@ Allow creating and querying double-entry vouchers with debit/credit lines.
 - [ ] Total mismatch fail test
 - [ ] Minimum line count test
 - [ ] Closed period block test
+
+## 10. Implementation Notes (2026-05-03)
+
+- Extended voucher API to support `bookkeepingMode=DOUBLE`.
+- Added `dcType` per line (`DEBIT`/`CREDIT`) and debit-credit total validation.
+- Added frontend double-entry tab with debit/credit line input and total summary.
