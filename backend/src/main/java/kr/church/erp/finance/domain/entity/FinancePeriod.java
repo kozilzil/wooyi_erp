@@ -79,6 +79,16 @@ public class FinancePeriod {
         this.active = false;
     }
 
+    public void close() {
+        this.status = "CLOSED";
+        this.updatedAt = LocalDateTime.now();
+    }
+
+    public void reopen() {
+        this.status = "OPEN";
+        this.updatedAt = LocalDateTime.now();
+    }
+
     public Long getId() {
         return id;
     }

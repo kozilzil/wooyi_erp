@@ -412,3 +412,16 @@ Changes:
 
 ### vouchers
 - `bookkeeping_mode` now used for both `SINGLE` and `DOUBLE`
+## 11. F04 Physical Schema Notes
+
+Implemented changes:
+- vouchers: approved_at, rejected_at, canceled_at, cancel_reason columns added
+- voucher_approval_histories table created
+- ledger_entries table created
+
+Key constraints:
+- voucher_approval_histories.voucher_id -> vouchers.id (FK)
+- ledger_entries.period_id -> finance_periods.id (FK)
+- ledger_entries.voucher_id -> vouchers.id (FK)
+- ledger_entries.voucher_line_id -> voucher_lines.id (FK)
+- ledger_entries.account_id -> finance_accounts.id (FK)

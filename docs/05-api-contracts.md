@@ -1,11 +1,11 @@
 # 05-api-contracts
 
-이 문서는 1차 API 계약 초안이다.
-실제 구현 시 OpenAPI로 확장하는 것을 권장한다.
+??문서??1�?API 계약 초안?�다.
+?�제 구현 ??OpenAPI�??�장?�는 것을 권장?�다.
 
 ## 1. 공통 규칙
 
-### 1.1 응답 형식
+### 1.1 ?�답 ?�식
 ```json
 {
   "success": true,
@@ -15,7 +15,7 @@
 }
 ```
 
-### 1.2 목록 조회 형식
+### 1.2 목록 조회 ?�식
 ```json
 {
   "success": true,
@@ -31,7 +31,7 @@
 }
 ```
 
-### 1.3 에러 형식
+### 1.3 ?�러 ?�식
 ```json
 {
   "success": false,
@@ -43,10 +43,10 @@
 
 ---
 
-## 2. 인증
+## 2. ?�증
 
 ### POST /api/auth/login
-입력:
+?�력:
 ```json
 {
   "loginId": "admin",
@@ -71,15 +71,15 @@
 ```
 
 ### POST /api/auth/logout
-- 현재 세션 또는 토큰 무효화
+- ?�재 ?�션 ?�는 ?�큰 무효??
 
 ### GET /api/auth/me
-- 현재 로그인 사용자 정보
-- 메뉴 권한 정보 포함 가능
+- ?�재 로그???�용???�보
+- 메뉴 권한 ?�보 ?�함 가??
 
 ---
 
-## 3. 회원
+## 3. ?�원
 
 ### GET /api/members
 쿼리:
@@ -91,14 +91,14 @@
 - size
 
 ### POST /api/members
-입력:
+?�력:
 ```json
 {
-  "name": "홍길동",
+  "name": "?�길??,
   "gender": "M",
   "birthDate": "1990-01-01",
   "phone": "010-0000-0000",
-  "address": "서울시 ...",
+  "address": "?�울??...",
   "registerDate": "2026-04-05",
   "departmentId": 10,
   "districtId": 100,
@@ -116,7 +116,7 @@
 
 ### GET /api/attendance
 ### POST /api/attendance
-입력:
+?�력:
 ```json
 {
   "memberId": 1,
@@ -129,7 +129,7 @@
 
 ---
 
-## 5. 재정
+## 5. ?�정
 
 ### GET /api/finance/periods
 ### POST /api/finance/periods
@@ -147,7 +147,7 @@
 - toDate
 
 ### POST /api/finance/vouchers
-입력:
+?�력:
 ```json
 {
   "voucherType": "GENERAL",
@@ -155,21 +155,21 @@
   "periodId": 1,
   "voucherDate": "2026-04-05",
   "departmentId": 3,
-  "description": "사무용품 구입",
+  "description": "?�무?�품 구입",
   "lines": [
     {
       "lineNo": 1,
       "dcType": "DEBIT",
       "accountId": 101,
       "amount": 100000,
-      "description": "사무용품비"
+      "description": "?�무?�품�?
     },
     {
       "lineNo": 2,
       "dcType": "CREDIT",
       "accountId": 201,
       "amount": 100000,
-      "description": "보통예금"
+      "description": "보통?�금"
     }
   ]
 }
@@ -198,18 +198,18 @@
 - status
 
 ### POST /api/assets
-입력:
+?�력:
 ```json
 {
   "assetNo": "A-2026-0001",
   "categoryId": 1,
-  "name": "노트북",
+  "name": "?�트�?,
   "purchaseDate": "2026-04-05",
   "purchaseAmount": 1500000,
   "departmentId": 2,
   "locationId": 5,
   "status": "NORMAL",
-  "vendorName": "ABC상사"
+  "vendorName": "ABC?�사"
 }
 ```
 
@@ -220,11 +220,11 @@
 
 ### POST /api/assets/{id}/qr-export
 출력:
-- PNG 또는 PDF 또는 CSV 다운로드 링크
+- PNG ?�는 PDF ?�는 CSV ?�운로드 링크
 
 ---
 
-## 7. 파일
+## 7. ?�일
 
 ### POST /api/files/upload
 ### GET /api/files/{id}/download
@@ -428,4 +428,30 @@ Rules:
 - `bookkeepingMode=DOUBLE` requires at least 2 lines
 - each line requires `dcType` (`DEBIT` or `CREDIT`)
 - DEBIT total must equal CREDIT total
-- closed period rejects create/update/request
+- closed period rejects create/update/request`r`n## 15. F04 API Additions (Voucher Approval/Cancel + Period Close/Reopen)
+
+### Voucher Approval Actions
+- POST /api/finance/vouchers/{id}/approve
+- POST /api/finance/vouchers/{id}/reject
+- POST /api/finance/vouchers/{id}/cancel
+
+Request body (approve/reject/cancel):
+{
+  "comment": "optional comment or cancel reason"
+}
+
+Rules:
+- only REQUESTED can be approved/rejected
+- only APPROVED can be canceled
+- cancel requires non-empty reason
+- approve creates ledger_entries
+- reject does not create ledger_entries
+
+### Period Close/Reopen
+- POST /api/finance/periods/{id}/close
+- POST /api/finance/periods/{id}/reopen
+- required header for reopen: X-User-Role: ADMIN
+
+Rules:
+- period close blocked when period has DRAFT or REQUESTED vouchers
+- closed period blocks voucher update/approval/cancel`r`n

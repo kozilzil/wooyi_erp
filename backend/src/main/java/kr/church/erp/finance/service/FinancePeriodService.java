@@ -5,6 +5,7 @@ import java.util.Map;
 import kr.church.erp.common.audit.service.AuditLogService;
 import kr.church.erp.finance.domain.entity.FinancePeriod;
 import kr.church.erp.finance.domain.repository.FinancePeriodRepository;
+import kr.church.erp.finance.voucher.domain.repository.VoucherRepository;
 import kr.church.erp.finance.dto.FinancePeriodCreateRequest;
 import kr.church.erp.finance.dto.FinancePeriodResponse;
 import kr.church.erp.finance.dto.FinancePeriodUpdateRequest;
@@ -19,10 +20,16 @@ public class FinancePeriodService {
     private static final String STATUS_CLOSED = "CLOSED";
 
     private final FinancePeriodRepository financePeriodRepository;
+    private final VoucherRepository voucherRepository;
     private final AuditLogService auditLogService;
 
-    public FinancePeriodService(FinancePeriodRepository financePeriodRepository, AuditLogService auditLogService) {
+    public FinancePeriodService(
+        FinancePeriodRepository financePeriodRepository,
+        VoucherRepository voucherRepository,
+        AuditLogService auditLogService
+    ) {
         this.financePeriodRepository = financePeriodRepository;
+        this.voucherRepository = voucherRepository;
         this.auditLogService = auditLogService;
     }
 
@@ -82,6 +89,45 @@ public class FinancePeriodService {
         Map<String, Object> before = snapshot(financePeriod);
         financePeriod.softDelete();
         auditLogService.log("finance", "finance_period", financePeriod.getId(), "DELETE", null, before, snapshot(financePeriod));
+    }
+
+    @Transactional
+    public FinancePeriodResponse close(Long id) {
+        FinancePeriod financePeriod = financePeriodRepository.findByIdAndDeletedAtIsNull(id)
+            .orElseThrow(() -> new IllegalArgumentException("Finance period not found"));
+        if (STATUS_CLOSED.equals(financePeriod.getStatus())) {
+            throw new IllegalArgumentException("Finance period already closed");
+        }
+
+        boolean hasPending = voucherRepository.existsByPeriodIdAndStatusInAndDeletedAtIsNull(
+            id,
+            java.util.List.of("DRAFT", "REQUESTED")
+        );
+        if (hasPending) {
+            throw new IllegalArgumentException("Cannot close period with pending vouchers");
+        }
+
+        Map<String, Object> before = snapshot(financePeriod);
+        financePeriod.close();
+        auditLogService.log("finance", "finance_period", financePeriod.getId(), "CLOSE", null, before, snapshot(financePeriod));
+        return FinancePeriodResponse.from(financePeriod);
+    }
+
+    @Transactional
+    public FinancePeriodResponse reopen(Long id, boolean isAdmin) {
+        if (!isAdmin) {
+            throw new IllegalArgumentException("Reopen is admin-only");
+        }
+        FinancePeriod financePeriod = financePeriodRepository.findByIdAndDeletedAtIsNull(id)
+            .orElseThrow(() -> new IllegalArgumentException("Finance period not found"));
+        if (STATUS_OPEN.equals(financePeriod.getStatus())) {
+            throw new IllegalArgumentException("Finance period already open");
+        }
+
+        Map<String, Object> before = snapshot(financePeriod);
+        financePeriod.reopen();
+        auditLogService.log("finance", "finance_period", financePeriod.getId(), "REOPEN", null, before, snapshot(financePeriod));
+        return FinancePeriodResponse.from(financePeriod);
     }
 
     private void validateDateRange(java.time.LocalDate startDate, java.time.LocalDate endDate) {

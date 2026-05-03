@@ -11,6 +11,7 @@ import java.util.Optional;
 import kr.church.erp.common.audit.service.AuditLogService;
 import kr.church.erp.finance.domain.entity.FinancePeriod;
 import kr.church.erp.finance.domain.repository.FinancePeriodRepository;
+import kr.church.erp.finance.voucher.domain.repository.VoucherRepository;
 import kr.church.erp.finance.dto.FinancePeriodCreateRequest;
 import kr.church.erp.finance.dto.FinancePeriodUpdateRequest;
 import org.junit.jupiter.api.BeforeEach;
@@ -27,12 +28,14 @@ class FinancePeriodServiceTest {
 
     @Mock
     private AuditLogService auditLogService;
+    @Mock
+    private VoucherRepository voucherRepository;
 
     private FinancePeriodService financePeriodService;
 
     @BeforeEach
     void setUp() {
-        financePeriodService = new FinancePeriodService(financePeriodRepository, auditLogService);
+        financePeriodService = new FinancePeriodService(financePeriodRepository, voucherRepository, auditLogService);
     }
 
     @Test
@@ -65,5 +68,23 @@ class FinancePeriodServiceTest {
             1L,
             new FinancePeriodUpdateRequest(LocalDate.parse("2026-01-01"), LocalDate.parse("2026-12-31"), "OPEN", true)
         )).isInstanceOf(IllegalArgumentException.class);
+    }
+
+    @Test
+    void reopenFailWhenNotAdmin() {
+        assertThatThrownBy(() -> financePeriodService.reopen(1L, false))
+            .isInstanceOf(IllegalArgumentException.class)
+            .hasMessageContaining("admin-only");
+    }
+
+    @Test
+    void closeFailWhenPendingVouchersExist() {
+        FinancePeriod period = FinancePeriod.create(2026, 1, LocalDate.parse("2026-01-01"), LocalDate.parse("2026-12-31"), "OPEN", true);
+        when(financePeriodRepository.findByIdAndDeletedAtIsNull(1L)).thenReturn(Optional.of(period));
+        when(voucherRepository.existsByPeriodIdAndStatusInAndDeletedAtIsNull(1L, java.util.List.of("DRAFT", "REQUESTED"))).thenReturn(true);
+
+        assertThatThrownBy(() -> financePeriodService.close(1L))
+            .isInstanceOf(IllegalArgumentException.class)
+            .hasMessageContaining("pending vouchers");
     }
 }

@@ -35,6 +35,18 @@ public class Voucher {
     @Column(name = "status", nullable = false, length = 20)
     private String status;
 
+    @Column(name = "approved_at")
+    private LocalDateTime approvedAt;
+
+    @Column(name = "rejected_at")
+    private LocalDateTime rejectedAt;
+
+    @Column(name = "canceled_at")
+    private LocalDateTime canceledAt;
+
+    @Column(name = "cancel_reason", length = 500)
+    private String cancelReason;
+
     @Column(name = "description", length = 500)
     private String description;
 
@@ -83,7 +95,39 @@ public class Voucher {
     }
 
     public void requestApproval() {
+        if (!isDraft()) {
+            throw new IllegalStateException("Only DRAFT voucher can be requested");
+        }
         this.status = "REQUESTED";
+        this.updatedAt = LocalDateTime.now();
+    }
+
+    public void approve() {
+        if (!"REQUESTED".equals(this.status)) {
+            throw new IllegalStateException("Only REQUESTED voucher can be approved");
+        }
+        this.status = "APPROVED";
+        this.approvedAt = LocalDateTime.now();
+        this.updatedAt = LocalDateTime.now();
+    }
+
+    public void reject(String comment) {
+        if (!"REQUESTED".equals(this.status)) {
+            throw new IllegalStateException("Only REQUESTED voucher can be rejected");
+        }
+        this.status = "REJECTED";
+        this.rejectedAt = LocalDateTime.now();
+        this.cancelReason = comment;
+        this.updatedAt = LocalDateTime.now();
+    }
+
+    public void cancel(String reason) {
+        if (!"APPROVED".equals(this.status)) {
+            throw new IllegalStateException("Only APPROVED voucher can be canceled");
+        }
+        this.status = "CANCELED";
+        this.canceledAt = LocalDateTime.now();
+        this.cancelReason = reason;
         this.updatedAt = LocalDateTime.now();
     }
 
@@ -94,6 +138,14 @@ public class Voucher {
 
     public boolean isDraft() {
         return "DRAFT".equals(this.status);
+    }
+
+    public boolean isRequested() {
+        return "REQUESTED".equals(this.status);
+    }
+
+    public boolean isApproved() {
+        return "APPROVED".equals(this.status);
     }
 
     public Long getId() {

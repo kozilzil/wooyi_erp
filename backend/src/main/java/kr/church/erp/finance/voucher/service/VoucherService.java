@@ -12,7 +12,11 @@ import kr.church.erp.finance.domain.entity.FinancePeriod;
 import kr.church.erp.finance.domain.repository.FinanceAccountRepository;
 import kr.church.erp.finance.domain.repository.FinancePeriodRepository;
 import kr.church.erp.finance.voucher.domain.entity.Voucher;
+import kr.church.erp.finance.voucher.domain.entity.VoucherApprovalHistory;
 import kr.church.erp.finance.voucher.domain.entity.VoucherLine;
+import kr.church.erp.finance.voucher.domain.entity.LedgerEntry;
+import kr.church.erp.finance.voucher.domain.repository.LedgerEntryRepository;
+import kr.church.erp.finance.voucher.domain.repository.VoucherApprovalHistoryRepository;
 import kr.church.erp.finance.voucher.domain.repository.VoucherLineRepository;
 import kr.church.erp.finance.voucher.domain.repository.VoucherRepository;
 import kr.church.erp.finance.voucher.dto.VoucherCreateRequest;
@@ -33,10 +37,15 @@ public class VoucherService {
     private static final String DC_CREDIT = "CREDIT";
     private static final String STATUS_DRAFT = "DRAFT";
     private static final String STATUS_REQUESTED = "REQUESTED";
+    private static final String STATUS_APPROVED = "APPROVED";
+    private static final String STATUS_REJECTED = "REJECTED";
+    private static final String STATUS_CANCELED = "CANCELED";
     private static final String PERIOD_STATUS_CLOSED = "CLOSED";
 
     private final VoucherRepository voucherRepository;
     private final VoucherLineRepository voucherLineRepository;
+    private final VoucherApprovalHistoryRepository voucherApprovalHistoryRepository;
+    private final LedgerEntryRepository ledgerEntryRepository;
     private final FinancePeriodRepository financePeriodRepository;
     private final FinanceAccountRepository financeAccountRepository;
     private final AuditLogService auditLogService;
@@ -44,12 +53,16 @@ public class VoucherService {
     public VoucherService(
         VoucherRepository voucherRepository,
         VoucherLineRepository voucherLineRepository,
+        VoucherApprovalHistoryRepository voucherApprovalHistoryRepository,
+        LedgerEntryRepository ledgerEntryRepository,
         FinancePeriodRepository financePeriodRepository,
         FinanceAccountRepository financeAccountRepository,
         AuditLogService auditLogService
     ) {
         this.voucherRepository = voucherRepository;
         this.voucherLineRepository = voucherLineRepository;
+        this.voucherApprovalHistoryRepository = voucherApprovalHistoryRepository;
+        this.ledgerEntryRepository = ledgerEntryRepository;
         this.financePeriodRepository = financePeriodRepository;
         this.financeAccountRepository = financeAccountRepository;
         this.auditLogService = auditLogService;
@@ -153,6 +166,64 @@ public class VoucherService {
         return after;
     }
 
+    @Transactional
+    public VoucherResponse approve(Long id, String comment) {
+        Voucher voucher = voucherRepository.findByIdAndDeletedAtIsNull(id)
+            .orElseThrow(() -> new IllegalArgumentException("Voucher not found"));
+        if (!voucher.isRequested()) {
+            throw new IllegalArgumentException("Only REQUESTED voucher can be approved");
+        }
+        loadOpenPeriod(voucher.getPeriodId());
+
+        VoucherResponse before = buildResponse(voucher, voucherLineRepository.findByVoucherIdOrderByLineNoAsc(voucher.getId()));
+        voucher.approve();
+        List<VoucherLine> lines = voucherLineRepository.findByVoucherIdOrderByLineNoAsc(voucher.getId());
+        postLedgerEntries(voucher, lines);
+        appendHistory(voucher.getId(), "APPROVE", comment);
+        VoucherResponse after = buildResponse(voucher, lines);
+        auditLogService.log("finance", "voucher", voucher.getId(), "APPROVE", null, snapshot(before), snapshot(after));
+        return after;
+    }
+
+    @Transactional
+    public VoucherResponse reject(Long id, String comment) {
+        Voucher voucher = voucherRepository.findByIdAndDeletedAtIsNull(id)
+            .orElseThrow(() -> new IllegalArgumentException("Voucher not found"));
+        if (!voucher.isRequested()) {
+            throw new IllegalArgumentException("Only REQUESTED voucher can be rejected");
+        }
+        loadOpenPeriod(voucher.getPeriodId());
+
+        VoucherResponse before = buildResponse(voucher, voucherLineRepository.findByVoucherIdOrderByLineNoAsc(voucher.getId()));
+        voucher.reject(comment);
+        appendHistory(voucher.getId(), "REJECT", comment);
+        VoucherResponse after = buildResponse(voucher, voucherLineRepository.findByVoucherIdOrderByLineNoAsc(voucher.getId()));
+        auditLogService.log("finance", "voucher", voucher.getId(), "REJECT", null, snapshot(before), snapshot(after));
+        return after;
+    }
+
+    @Transactional
+    public VoucherResponse cancel(Long id, String reason) {
+        if (reason == null || reason.isBlank()) {
+            throw new IllegalArgumentException("cancel reason is required");
+        }
+
+        Voucher voucher = voucherRepository.findByIdAndDeletedAtIsNull(id)
+            .orElseThrow(() -> new IllegalArgumentException("Voucher not found"));
+        if (!voucher.isApproved()) {
+            throw new IllegalArgumentException("Only APPROVED voucher can be canceled");
+        }
+        loadOpenPeriod(voucher.getPeriodId());
+
+        VoucherResponse before = buildResponse(voucher, voucherLineRepository.findByVoucherIdOrderByLineNoAsc(voucher.getId()));
+        voucher.cancel(reason.trim());
+        ledgerEntryRepository.deleteByVoucherId(voucher.getId());
+        appendHistory(voucher.getId(), "CANCEL", reason.trim());
+        VoucherResponse after = buildResponse(voucher, voucherLineRepository.findByVoucherIdOrderByLineNoAsc(voucher.getId()));
+        auditLogService.log("finance", "voucher", voucher.getId(), "CANCEL", null, snapshot(before), snapshot(after));
+        return after;
+    }
+
     private void ensureDraft(Voucher voucher) {
         if (!voucher.isDraft()) {
             throw new IllegalArgumentException("Only DRAFT voucher can be modified");
@@ -247,7 +318,9 @@ public class VoucherService {
     private String normalizeStatus(String value) {
         String normalized = value.trim().toUpperCase();
         if (!STATUS_DRAFT.equals(normalized) && !STATUS_REQUESTED.equals(normalized)) {
-            throw new IllegalArgumentException("status must be DRAFT or REQUESTED");
+            if (!STATUS_APPROVED.equals(normalized) && !STATUS_REJECTED.equals(normalized) && !STATUS_CANCELED.equals(normalized)) {
+                throw new IllegalArgumentException("status must be DRAFT, REQUESTED, APPROVED, REJECTED or CANCELED");
+            }
         }
         return normalized;
     }
@@ -295,5 +368,24 @@ public class VoucherService {
             "totalAmount", response.totalAmount(),
             "lineCount", response.lines().size()
         );
+    }
+
+    private void appendHistory(Long voucherId, String action, String comment) {
+        voucherApprovalHistoryRepository.save(VoucherApprovalHistory.create(voucherId, action, null, comment));
+    }
+
+    private void postLedgerEntries(Voucher voucher, List<VoucherLine> lines) {
+        List<LedgerEntry> entries = lines.stream()
+            .map(line -> LedgerEntry.create(
+                voucher.getPeriodId(),
+                voucher.getId(),
+                line.getId(),
+                voucher.getVoucherDate(),
+                line.getAccountId(),
+                line.getDcType(),
+                line.getAmount()
+            ))
+            .toList();
+        ledgerEntryRepository.saveAll(entries);
     }
 }

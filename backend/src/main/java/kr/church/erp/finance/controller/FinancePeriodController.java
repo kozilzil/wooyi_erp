@@ -18,6 +18,7 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.RequestHeader;
 
 @RestController
 @RequestMapping("/api/finance/periods")
@@ -55,5 +56,19 @@ public class FinancePeriodController {
     public ApiResponse<Void> delete(@PathVariable Long id) {
         financePeriodService.delete(id);
         return ApiResponse.ok(null);
+    }
+
+    @PostMapping("/{id}/close")
+    public ApiResponse<FinancePeriodResponse> close(@PathVariable Long id) {
+        return ApiResponse.ok(financePeriodService.close(id));
+    }
+
+    @PostMapping("/{id}/reopen")
+    public ApiResponse<FinancePeriodResponse> reopen(
+        @PathVariable Long id,
+        @RequestHeader(value = "X-User-Role", required = false) String role
+    ) {
+        boolean isAdmin = "ADMIN".equalsIgnoreCase(role);
+        return ApiResponse.ok(financePeriodService.reopen(id, isAdmin));
     }
 }

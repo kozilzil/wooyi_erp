@@ -5,6 +5,7 @@ import java.time.LocalDate;
 import kr.church.erp.common.api.ApiResponse;
 import kr.church.erp.common.api.PageResponse;
 import kr.church.erp.finance.voucher.dto.VoucherCreateRequest;
+import kr.church.erp.finance.voucher.dto.VoucherActionRequest;
 import kr.church.erp.finance.voucher.dto.VoucherResponse;
 import kr.church.erp.finance.voucher.dto.VoucherUpdateRequest;
 import kr.church.erp.finance.voucher.service.VoucherService;
@@ -69,5 +70,20 @@ public class VoucherController {
     @PostMapping("/{id}/request-approval")
     public ApiResponse<VoucherResponse> requestApproval(@PathVariable Long id) {
         return ApiResponse.ok(voucherService.requestApproval(id));
+    }
+
+    @PostMapping("/{id}/approve")
+    public ApiResponse<VoucherResponse> approve(@PathVariable Long id, @RequestBody(required = false) VoucherActionRequest request) {
+        return ApiResponse.ok(voucherService.approve(id, request == null ? null : request.comment()));
+    }
+
+    @PostMapping("/{id}/reject")
+    public ApiResponse<VoucherResponse> reject(@PathVariable Long id, @RequestBody(required = false) VoucherActionRequest request) {
+        return ApiResponse.ok(voucherService.reject(id, request == null ? null : request.comment()));
+    }
+
+    @PostMapping("/{id}/cancel")
+    public ApiResponse<VoucherResponse> cancel(@PathVariable Long id, @RequestBody VoucherActionRequest request) {
+        return ApiResponse.ok(voucherService.cancel(id, request == null ? null : request.comment()));
     }
 }

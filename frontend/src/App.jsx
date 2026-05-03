@@ -492,6 +492,51 @@ function App() {
     }
   }
 
+  async function approveVoucher(id) {
+    try {
+      await api(`/api/finance/vouchers/${id}/approve`, { method: 'POST', body: JSON.stringify({ comment: 'approved' }) })
+      await loadVouchers()
+    } catch (err) {
+      setError(err.message)
+    }
+  }
+
+  async function rejectVoucher(id) {
+    try {
+      await api(`/api/finance/vouchers/${id}/reject`, { method: 'POST', body: JSON.stringify({ comment: 'rejected' }) })
+      await loadVouchers()
+    } catch (err) {
+      setError(err.message)
+    }
+  }
+
+  async function cancelVoucher(id) {
+    try {
+      await api(`/api/finance/vouchers/${id}/cancel`, { method: 'POST', body: JSON.stringify({ comment: 'manual cancel' }) })
+      await loadVouchers()
+    } catch (err) {
+      setError(err.message)
+    }
+  }
+
+  async function closePeriod(id) {
+    try {
+      await api(`/api/finance/periods/${id}/close`, { method: 'POST' })
+      await loadFinancePeriods()
+    } catch (err) {
+      setError(err.message)
+    }
+  }
+
+  async function reopenPeriod(id) {
+    try {
+      await api(`/api/finance/periods/${id}/reopen`, { method: 'POST', headers: { 'X-User-Role': 'ADMIN' } })
+      await loadFinancePeriods()
+    } catch (err) {
+      setError(err.message)
+    }
+  }
+
   function selectOrg(item) {
     setOrgEditId(item.id)
     setOrgForm({
@@ -703,6 +748,8 @@ function App() {
                     <button type="button" className="row-main" onClick={() => selectPeriod(item)}>
                       <strong>{item.fiscalYear}-{item.periodNo}</strong> {item.startDate} ~ {item.endDate} ({item.status}, {item.active ? '활성' : '비활성'})
                     </button>
+                    <button type="button" onClick={() => void closePeriod(item.id)}>마감</button>
+                    <button type="button" onClick={() => void reopenPeriod(item.id)}>재오픈</button>
                     <button type="button" className="danger" onClick={() => void removeFinancePeriod(item.id)}>삭제</button>
                   </div>
                 ))}
@@ -804,6 +851,9 @@ function App() {
                   <option value="">전체상태</option>
                   <option value="DRAFT">DRAFT</option>
                   <option value="REQUESTED">REQUESTED</option>
+                  <option value="APPROVED">APPROVED</option>
+                  <option value="REJECTED">REJECTED</option>
+                  <option value="CANCELED">CANCELED</option>
                 </select>
                 <input type="date" value={voucherFromDate} onChange={(e) => setVoucherFromDate(e.target.value)} />
                 <input type="date" value={voucherToDate} onChange={(e) => setVoucherToDate(e.target.value)} />
@@ -815,6 +865,9 @@ function App() {
                     <button type="button" className="row-main" onClick={() => selectVoucher(item)}>
                       <strong>{item.voucherNo}</strong> {item.voucherType} {item.totalAmount.toLocaleString()}원 ({item.status})
                     </button>
+                    <button type="button" onClick={() => void approveVoucher(item.id)}>승인</button>
+                    <button type="button" onClick={() => void rejectVoucher(item.id)}>반려</button>
+                    <button type="button" onClick={() => void cancelVoucher(item.id)}>취소</button>
                     <button type="button" className="danger" onClick={() => void removeVoucher(item.id)}>삭제</button>
                   </div>
                 ))}
@@ -862,6 +915,9 @@ function App() {
                   <option value="">전체상태</option>
                   <option value="DRAFT">DRAFT</option>
                   <option value="REQUESTED">REQUESTED</option>
+                  <option value="APPROVED">APPROVED</option>
+                  <option value="REJECTED">REJECTED</option>
+                  <option value="CANCELED">CANCELED</option>
                 </select>
                 <input type="date" value={voucherFromDate} onChange={(e) => setVoucherFromDate(e.target.value)} />
                 <input type="date" value={voucherToDate} onChange={(e) => setVoucherToDate(e.target.value)} />

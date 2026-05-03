@@ -31,4 +31,6 @@ public interface VoucherRepository extends JpaRepository<Voucher, Long> {
         @Param("toDate") LocalDate toDate,
         Pageable pageable
     );
+
+    boolean existsByPeriodIdAndStatusInAndDeletedAtIsNull(Long periodId, java.util.Collection<String> statuses);
 }

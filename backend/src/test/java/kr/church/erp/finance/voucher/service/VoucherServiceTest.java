@@ -3,6 +3,7 @@ package kr.church.erp.finance.voucher.service;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -16,6 +17,9 @@ import kr.church.erp.finance.domain.entity.FinancePeriod;
 import kr.church.erp.finance.domain.repository.FinanceAccountRepository;
 import kr.church.erp.finance.domain.repository.FinancePeriodRepository;
 import kr.church.erp.finance.voucher.domain.entity.Voucher;
+import kr.church.erp.finance.voucher.domain.entity.VoucherLine;
+import kr.church.erp.finance.voucher.domain.repository.LedgerEntryRepository;
+import kr.church.erp.finance.voucher.domain.repository.VoucherApprovalHistoryRepository;
 import kr.church.erp.finance.voucher.domain.repository.VoucherLineRepository;
 import kr.church.erp.finance.voucher.domain.repository.VoucherRepository;
 import kr.church.erp.finance.voucher.dto.VoucherCreateRequest;
@@ -34,6 +38,10 @@ class VoucherServiceTest {
     @Mock
     private VoucherLineRepository voucherLineRepository;
     @Mock
+    private VoucherApprovalHistoryRepository voucherApprovalHistoryRepository;
+    @Mock
+    private LedgerEntryRepository ledgerEntryRepository;
+    @Mock
     private FinancePeriodRepository financePeriodRepository;
     @Mock
     private FinanceAccountRepository financeAccountRepository;
@@ -47,6 +55,8 @@ class VoucherServiceTest {
         voucherService = new VoucherService(
             voucherRepository,
             voucherLineRepository,
+            voucherApprovalHistoryRepository,
+            ledgerEntryRepository,
             financePeriodRepository,
             financeAccountRepository,
             auditLogService
@@ -135,9 +145,60 @@ class VoucherServiceTest {
             .hasMessageContaining("DEBIT total must equal CREDIT total");
     }
 
+    @Test
+    void approveSuccessPostsLedger() throws Exception {
+        FinancePeriod period = FinancePeriod.create(2026, 1, LocalDate.parse("2026-01-01"), LocalDate.parse("2026-12-31"), "OPEN", true);
+        Voucher voucher = Voucher.create("DV-1", "DOUBLE", "GENERAL", 1L, LocalDate.parse("2026-04-01"), "double", 1000L);
+        setId(voucher, 1L);
+        voucher.requestApproval();
+        VoucherLine voucherLine = VoucherLine.create(1L, 1, "DEBIT", 10L, 1000L, "d");
+        setLineId(voucherLine, 100L);
+
+        when(voucherRepository.findByIdAndDeletedAtIsNull(1L)).thenReturn(Optional.of(voucher));
+        when(financePeriodRepository.findByIdAndDeletedAtIsNull(1L)).thenReturn(Optional.of(period));
+        when(voucherLineRepository.findByVoucherIdOrderByLineNoAsc(1L)).thenReturn(List.of(voucherLine));
+        when(ledgerEntryRepository.saveAll(any())).thenAnswer(inv -> inv.getArgument(0));
+
+        var result = voucherService.approve(1L, "ok");
+
+        assertThat(result.status()).isEqualTo("APPROVED");
+        verify(ledgerEntryRepository).saveAll(any());
+        verify(voucherApprovalHistoryRepository).save(any());
+    }
+
+    @Test
+    void cancelFailWhenReasonMissing() {
+        assertThatThrownBy(() -> voucherService.cancel(1L, " "))
+            .isInstanceOf(IllegalArgumentException.class)
+            .hasMessageContaining("reason");
+    }
+
+    @Test
+    void rejectSuccessDoesNotPostLedger() throws Exception {
+        FinancePeriod period = FinancePeriod.create(2026, 1, LocalDate.parse("2026-01-01"), LocalDate.parse("2026-12-31"), "OPEN", true);
+        Voucher voucher = Voucher.create("DV-2", "DOUBLE", "GENERAL", 1L, LocalDate.parse("2026-04-01"), "double", 1000L);
+        setId(voucher, 2L);
+        voucher.requestApproval();
+
+        when(voucherRepository.findByIdAndDeletedAtIsNull(2L)).thenReturn(Optional.of(voucher));
+        when(financePeriodRepository.findByIdAndDeletedAtIsNull(1L)).thenReturn(Optional.of(period));
+        when(voucherLineRepository.findByVoucherIdOrderByLineNoAsc(2L)).thenReturn(List.of());
+
+        var result = voucherService.reject(2L, "invalid");
+
+        assertThat(result.status()).isEqualTo("REJECTED");
+        verify(ledgerEntryRepository, never()).saveAll(any());
+        verify(voucherApprovalHistoryRepository).save(any());
+    }
     private static void setId(Voucher voucher, Long id) throws Exception {
         Field field = Voucher.class.getDeclaredField("id");
         field.setAccessible(true);
         field.set(voucher, id);
+    }
+
+    private static void setLineId(VoucherLine line, Long id) throws Exception {
+        Field field = VoucherLine.class.getDeclaredField("id");
+        field.setAccessible(true);
+        field.set(line, id);
     }
 }
